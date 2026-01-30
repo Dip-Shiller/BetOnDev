@@ -172,21 +172,24 @@ Railway configuration is included in `railway.json`.
 ## ⚠️ Important Notes
 
 ### Security
-- **Never commit your `.env` file**
-- Keep private keys secure
-- Use separate wallets for trading
-- Start with small amounts
+- **Never commit your `.env` file or expose private keys**
+- Keep private keys secure and use separate wallets for trading
+- Set `WEBHOOK_SECRET` to verify webhook authenticity
+- Start with small amounts for testing
+- The bot does not validate whale wallet addresses - ensure they are correct
+
+### Known Limitations
+- **Token Decimals**: Price calculations assume standard token decimals. Some tokens with non-standard decimals may show approximate prices.
+- **Webhook Format**: Designed for Helius Enhanced Transaction webhooks. Other formats may need adjustment.
+- **Rate Limits**: Jupiter API and RPC endpoints have rate limits. Monitor usage accordingly.
+- **No Database**: Uses JSON file storage. For high-volume trading, consider a database.
 
 ### Risk Management
-- This bot trades automatically
-- Test thoroughly on devnet first
+- This bot trades automatically based on whale activity
+- Test thoroughly on devnet before using real funds
 - Monitor positions regularly
-- Adjust risk parameters as needed
-
-### Rate Limits
-- Jupiter API has rate limits
-- Price checks are cached for 5 seconds
-- Adjust `PRICE_CHECK_INTERVAL_SECONDS` if needed
+- Start with conservative risk parameters
+- Consider implementing additional risk controls for production use
 
 ## 🛠️ Development
 

@@ -7,15 +7,16 @@ const walletManager = require('../utils/walletManager');
 class WebhookHandler {
   async handleHeliusWebhook(webhookData) {
     try {
-      console.log('Received Helius webhook:', JSON.stringify(webhookData, null, 2));
+      console.log('Received Helius webhook');
 
-      // Parse webhook data
-      const transactions = webhookData[0]?.events?.nft?.nfts || [];
-      const description = webhookData[0]?.description || '';
-      const accountData = webhookData[0]?.accountData || [];
+      // Helius Enhanced Transaction webhook structure
+      if (!Array.isArray(webhookData) || webhookData.length === 0) {
+        console.log('Invalid webhook data structure');
+        return;
+      }
 
-      // Check if this is a token buy from a whale wallet
-      const fromAddress = webhookData[0]?.feePayer;
+      const transaction = webhookData[0];
+      const fromAddress = transaction.feePayer;
       
       if (!config.whaleWallets.includes(fromAddress)) {
         console.log('Transaction not from tracked whale wallet');
@@ -24,18 +25,32 @@ class WebhookHandler {
 
       console.log(`Detected transaction from whale: ${fromAddress}`);
 
-      // Extract token mint from transaction
+      // Extract token mint and amount from tokenTransfers or accountData
       let tokenMint = null;
       let amount = 0;
 
-      // Parse account data for SPL token transfers
-      for (const account of accountData) {
-        if (account.account && account.tokenBalanceChanges) {
-          for (const change of account.tokenBalanceChanges) {
-            if (change.rawTokenAmount && parseFloat(change.rawTokenAmount.tokenAmount) > 0) {
-              tokenMint = change.mint;
-              amount = parseFloat(change.rawTokenAmount.tokenAmount) / Math.pow(10, change.rawTokenAmount.decimals);
-              break;
+      // Try to extract from tokenTransfers first (more reliable)
+      if (transaction.tokenTransfers && transaction.tokenTransfers.length > 0) {
+        for (const transfer of transaction.tokenTransfers) {
+          // Look for incoming transfers to the whale (buys)
+          if (transfer.toUserAccount === fromAddress && transfer.tokenAmount > 0) {
+            tokenMint = transfer.mint;
+            amount = transfer.tokenAmount;
+            break;
+          }
+        }
+      }
+
+      // Fallback to accountData if tokenTransfers not available
+      if (!tokenMint && transaction.accountData) {
+        for (const account of transaction.accountData) {
+          if (account.tokenBalanceChanges) {
+            for (const change of account.tokenBalanceChanges) {
+              if (change.userAccount === fromAddress && parseFloat(change.tokenAmount) > 0) {
+                tokenMint = change.mint;
+                amount = parseFloat(change.tokenAmount);
+                break;
+              }
             }
           }
         }
@@ -60,8 +75,8 @@ class WebhookHandler {
     try {
       const wallets = walletManager.getWallets();
       
-      // Use a fixed SOL amount or percentage of balance
-      const solAmountToBuy = 0.1; // 0.1 SOL per trade
+      // Use configured SOL amount for copying trades
+      const solAmountToBuy = config.trading.copyTradeAmount;
 
       for (const wallet of wallets) {
         console.log(`Copying trade for wallet ${wallet.index}...`);
@@ -72,9 +87,9 @@ class WebhookHandler {
         if (result.success) {
           console.log(`Buy successful for wallet ${wallet.index}: ${result.txid}`);
 
-          // Get entry price (SOL per token)
-          const entryPrice = result.quote.inAmount / result.quote.outAmount;
-          const tokenAmount = result.quote.outAmount;
+          // Calculate entry price (SOL per token with decimals)
+          const entryPrice = parseFloat(result.quote.inAmount) / parseFloat(result.quote.outAmount);
+          const tokenAmount = parseFloat(result.quote.outAmount);
 
           // Create position
           await positionManager.createPosition(

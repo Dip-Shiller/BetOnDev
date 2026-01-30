@@ -13,6 +13,7 @@ module.exports = {
     trailingStopPercent: parseFloat(process.env.TRAILING_STOP_PERCENT || '20'),
     positionTimeoutMinutes: parseInt(process.env.POSITION_TIMEOUT_MINUTES || '60', 10),
     priceCheckIntervalSeconds: parseInt(process.env.PRICE_CHECK_INTERVAL_SECONDS || '10', 10),
+    copyTradeAmount: parseFloat(process.env.COPY_TRADE_SOL_AMOUNT || '0.1'),
   },
   telegram: {
     botToken: process.env.TELEGRAM_BOT_TOKEN,
@@ -21,6 +22,7 @@ module.exports = {
   server: {
     port: parseInt(process.env.PORT || '3000', 10),
     webDashboardPort: parseInt(process.env.WEB_DASHBOARD_PORT || '3001', 10),
+    webhookSecret: process.env.WEBHOOK_SECRET,
   },
   jupiter: {
     apiUrl: process.env.JUPITER_API_URL || 'https://quote-api.jup.ag/v6',

@@ -25,7 +25,10 @@ class PositionManager {
   }
 
   generateId() {
-    return `pos_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Use timestamp + counter for guaranteed uniqueness
+    if (!this.idCounter) this.idCounter = 0;
+    this.idCounter = (this.idCounter + 1) % 10000;
+    return `pos_${Date.now()}_${this.idCounter.toString().padStart(4, '0')}`;
   }
 
   async createPosition(tokenMint, entryPrice, amount, walletIndex) {
@@ -56,9 +59,12 @@ class PositionManager {
         return cached.price;
       }
 
-      // Get price from Jupiter
+      // Get price from Jupiter by attempting to swap a standard amount
+      // Note: Uses 1e6 (1 token with 6 decimals) as a standard. For tokens with different
+      // decimals, this provides an approximate price. For production use, consider
+      // fetching actual token decimals from the mint account.
       const SOL_MINT = 'So11111111111111111111111111111111111111112';
-      const quote = await jupiterService.getQuote(tokenMint, SOL_MINT, 1e6); // 1 token with 6 decimals
+      const quote = await jupiterService.getQuote(tokenMint, SOL_MINT, 1e6);
       
       const price = parseFloat(quote.outAmount) / 1e9; // Convert to SOL
       this.priceCache.set(tokenMint, { price, timestamp: Date.now() });

@@ -82,22 +82,22 @@ class DataStore {
   }
 
   // Position methods
-  addPosition(position) {
+  async addPosition(position) {
     this.positions.push(position);
-    this.savePositions();
+    await this.savePositions();
   }
 
-  updatePosition(id, updates) {
+  async updatePosition(id, updates) {
     const index = this.positions.findIndex(p => p.id === id);
     if (index !== -1) {
       this.positions[index] = { ...this.positions[index], ...updates };
-      this.savePositions();
+      await this.savePositions();
     }
   }
 
-  removePosition(id) {
+  async removePosition(id) {
     this.positions = this.positions.filter(p => p.id !== id);
-    this.savePositions();
+    await this.savePositions();
   }
 
   getPositions() {
@@ -109,9 +109,9 @@ class DataStore {
   }
 
   // Trade methods
-  addTrade(trade) {
+  async addTrade(trade) {
     this.trades.push(trade);
-    this.saveTrades();
+    await this.saveTrades();
   }
 
   getTrades(limit = 100) {
@@ -119,9 +119,9 @@ class DataStore {
   }
 
   // Stats methods
-  updateStats(updates) {
+  async updateStats(updates) {
     this.stats = { ...this.stats, ...updates };
-    this.saveStats();
+    await this.saveStats();
   }
 
   getStats() {

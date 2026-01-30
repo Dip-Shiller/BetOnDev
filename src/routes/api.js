@@ -15,6 +15,15 @@ router.get('/health', (req, res) => {
 // Helius webhook endpoint
 router.post('/webhook/helius', async (req, res) => {
   try {
+    // Verify webhook signature if secret is configured
+    if (config.server.webhookSecret) {
+      const signature = req.headers['x-webhook-signature'];
+      if (!signature || signature !== config.server.webhookSecret) {
+        console.warn('Invalid webhook signature');
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+    }
+    
     console.log('Received Helius webhook');
     await webhookHandler.handleHeliusWebhook(req.body);
     res.json({ success: true });

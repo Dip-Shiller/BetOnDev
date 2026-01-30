@@ -22,7 +22,8 @@ class WalletManager {
       });
       console.log(`Initialized ${this.wallets.length} trading wallets`);
     } catch (error) {
-      console.error('Error initializing wallets:', error);
+      console.error('Error initializing wallets - check your PRIVATE_KEYS configuration');
+      throw error; // Fail fast if wallets cannot be initialized
     }
   }
 
