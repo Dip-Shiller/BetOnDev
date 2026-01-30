@@ -6,6 +6,7 @@ const config = require('./config');
 const dataStore = require('./utils/dataStore');
 const positionManager = require('./services/positionManager');
 const telegramBot = require('./services/telegramBot');
+const walletTracker = require('./services/walletTracker');
 const WebSocketServer = require('./services/websocketServer');
 const apiRoutes = require('./routes/api');
 
@@ -52,11 +53,15 @@ async function shutdown() {
 // Start the application
 async function start() {
   try {
-    console.log('🚀 Starting BetOnDev Copy Trading Bot...');
+    console.log('🚀 Starting BetOnDev Wallet Tracker...');
     
     // Initialize data store
     await dataStore.init();
     console.log('✅ Data store initialized');
+
+    // Initialize wallet tracker
+    await walletTracker.init();
+    console.log('✅ Wallet tracker initialized');
 
     // Start position manager
     positionManager.start();
@@ -70,10 +75,10 @@ async function start() {
     const port = config.server.port;
     server.listen(port, () => {
       console.log(`✅ Server running on port ${port}`);
-      console.log(`📊 Dashboard: http://localhost:${port}`);
+      console.log(`📊 Dashboard: http://localhost:${port}/dashboard.html`);
       console.log(`🔗 Webhook endpoint: http://localhost:${port}/webhook/helius`);
       console.log('');
-      console.log('🎯 Bot is ready to copy trades!');
+      console.log('🎯 Wallet tracker is live!');
     });
 
   } catch (error) {

@@ -1,15 +1,17 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+const DATA_DIR = path.join(__dirname, '..', '..', 'data');
 const POSITIONS_FILE = path.join(DATA_DIR, 'positions.json');
 const TRADES_FILE = path.join(DATA_DIR, 'trades.json');
 const STATS_FILE = path.join(DATA_DIR, 'stats.json');
+const WALLETS_FILE = path.join(DATA_DIR, 'wallets.json');
 
 class DataStore {
   constructor() {
     this.positions = [];
     this.trades = [];
+    this.trackedWallets = [];
     this.stats = {
       totalTrades: 0,
       successfulTrades: 0,
@@ -53,6 +55,15 @@ class DataStore {
     } catch (error) {
       if (error.code !== 'ENOENT') {
         console.error('Error loading stats:', error);
+      }
+    }
+
+    try {
+      const walletsData = await fs.readFile(WALLETS_FILE, 'utf8');
+      this.trackedWallets = JSON.parse(walletsData);
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        console.error('Error loading wallets:', error);
       }
     }
   }
@@ -126,6 +137,20 @@ class DataStore {
 
   getStats() {
     return this.stats;
+  }
+
+  // Tracked wallets methods
+  async saveTrackedWallets(wallets) {
+    try {
+      this.trackedWallets = wallets;
+      await fs.writeFile(WALLETS_FILE, JSON.stringify(wallets, null, 2));
+    } catch (error) {
+      console.error('Error saving tracked wallets:', error);
+    }
+  }
+
+  getTrackedWallets() {
+    return this.trackedWallets;
   }
 }
 

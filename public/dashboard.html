@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BetOnDev - Solana Wallet Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+    <style>
+        @keyframes slideUp {
+            from { transform: translateY(10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .slide-up { animation: slideUp 0.3s ease-out; }
+        .gradient-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .gradient-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .gradient-purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); }
+        .hover-scale { transition: transform 0.2s; }
+        .hover-scale:hover { transform: scale(1.02); }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 min-h-screen text-white">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 glass border-b border-white/10">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                        <span class="text-2xl">🎯</span>
+                    </div>
+                    <h1 class="text-2xl font-bold">BetOnDev</h1>
+                </div>
+                
+                <!-- Search Bar -->
+                <div class="flex-1 max-w-xl mx-8">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            id="walletSearch" 
+                            placeholder="Search any Solana wallet address..."
+                            class="w-full px-6 py-3 rounded-xl bg-white/10 border border-white/20 focus:border-purple-500 focus:outline-none placeholder-gray-400"
+                        />
+                        <button onclick="searchWallet()" class="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-2 gradient-purple rounded-lg hover:opacity-90">
+                            Search
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-sm text-gray-300">Live</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="glass rounded-2xl p-6 hover-scale">
+                <div class="text-gray-400 text-sm mb-2">Total PnL</div>
+                <div id="totalPnL" class="text-3xl font-bold text-green-500">+$0.00</div>
+                <div class="text-xs text-gray-500 mt-1">All time</div>
+            </div>
+            <div class="glass rounded-2xl p-6 hover-scale">
+                <div class="text-gray-400 text-sm mb-2">Win Rate</div>
+                <div id="winRate" class="text-3xl font-bold">0%</div>
+                <div class="text-xs text-gray-500 mt-1">Success ratio</div>
+            </div>
+            <div class="glass rounded-2xl p-6 hover-scale">
+                <div class="text-gray-400 text-sm mb-2">Active Positions</div>
+                <div id="activePositions" class="text-3xl font-bold">0</div>
+                <div class="text-xs text-gray-500 mt-1">Open trades</div>
+            </div>
+            <div class="glass rounded-2xl p-6 hover-scale">
+                <div class="text-gray-400 text-sm mb-2">Tracked Wallets</div>
+                <div id="trackedWallets" class="text-3xl font-bold">0</div>
+                <div class="text-xs text-gray-500 mt-1">Monitoring</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex space-x-2 mb-6 border-b border-white/10">
+            <button onclick="showTab('dashboard')" id="tab-dashboard" class="px-6 py-3 font-semibold border-b-2 border-purple-500">
+                Dashboard
+            </button>
+            <button onclick="showTab('leaderboard')" id="tab-leaderboard" class="px-6 py-3 font-semibold text-gray-400 hover:text-white">
+                Leaderboard
+            </button>
+            <button onclick="showTab('positions')" id="tab-positions" class="px-6 py-3 font-semibold text-gray-400 hover:text-white">
+                Positions
+            </button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="content-dashboard" class="space-y-6">
+            <!-- PNL Cards -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Open Positions PNL -->
+                <div class="glass rounded-2xl p-6">
+                    <h2 class="text-xl font-bold mb-4 flex items-center justify-between">
+                        <span>Open Positions</span>
+                        <span class="text-sm font-normal text-gray-400" id="openCount">0 positions</span>
+                    </h2>
+                    <div id="openPositionsList" class="space-y-3">
+                        <div class="text-center text-gray-400 py-8">No open positions</div>
+                    </div>
+                </div>
+
+                <!-- Performance Chart -->
+                <div class="glass rounded-2xl p-6">
+                    <h2 class="text-xl font-bold mb-4">Performance</h2>
+                    <canvas id="performanceChart" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Token Holdings -->
+            <div class="glass rounded-2xl p-6">
+                <h2 class="text-xl font-bold mb-4">Token Holdings</h2>
+                <div id="tokenHoldings" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="text-center text-gray-400 py-8">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Trade History Timeline -->
+            <div class="glass rounded-2xl p-6">
+                <h2 class="text-xl font-bold mb-4">Trade History</h2>
+                <div id="tradeHistory" class="space-y-3">
+                    <div class="text-center text-gray-400 py-8">No trades yet</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Tab -->
+        <div id="content-leaderboard" class="hidden">
+            <div class="glass rounded-2xl p-6">
+                <h2 class="text-2xl font-bold mb-6">Top Performers</h2>
+                <div id="leaderboardList" class="space-y-4">
+                    <div class="text-center text-gray-400 py-8">Loading leaderboard...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Positions Tab -->
+        <div id="content-positions" class="hidden">
+            <div class="space-y-4" id="positionsList">
+                <div class="text-center text-gray-400 py-8">Loading positions...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Wallet Detail Modal -->
+    <div id="walletModal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div class="glass rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold" id="modalWalletAddress">Wallet Details</h2>
+                <button onclick="closeWalletModal()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-white/5 rounded-xl p-4">
+                    <div class="text-gray-400 text-sm mb-1">Total PnL</div>
+                    <div id="modalPnL" class="text-2xl font-bold text-green-500">+$0.00</div>
+                </div>
+                <div class="bg-white/5 rounded-xl p-4">
+                    <div class="text-gray-400 text-sm mb-1">Win Rate</div>
+                    <div id="modalWinRate" class="text-2xl font-bold">0%</div>
+                </div>
+                <div class="bg-white/5 rounded-xl p-4">
+                    <div class="text-gray-400 text-sm mb-1">Total Trades</div>
+                    <div id="modalTrades" class="text-2xl font-bold">0</div>
+                </div>
+            </div>
+
+            <div class="flex space-x-4 mb-6">
+                <button onclick="copyTrade()" class="flex-1 py-4 gradient-purple rounded-xl text-xl font-bold hover:opacity-90">
+                    📋 Copy Trade
+                </button>
+                <button onclick="addToTracking()" class="flex-1 py-4 bg-white/10 rounded-xl text-xl font-bold hover:bg-white/20">
+                    ⭐ Track Wallet
+                </button>
+            </div>
+
+            <div id="modalContent">
+                <canvas id="walletPerformanceChart" height="150"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        let performanceChart;
+        let walletChart;
+
+        // Connect WebSocket
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'update') {
+                    updateDashboard(data);
+                }
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected, reconnecting...');
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+
+        // Initialize charts
+        function initCharts() {
+            const ctx = document.getElementById('performanceChart');
+            performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'PnL',
+                        data: [],
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#9ca3af' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: '#9ca3af' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update dashboard with data
+        function updateDashboard(data) {
+            // Update stats
+            const stats = data.stats || {};
+            document.getElementById('totalPnL').textContent = formatPnL(stats.totalPnL || 0);
+            document.getElementById('totalPnL').className = `text-3xl font-bold ${stats.totalPnL >= 0 ? 'text-green-500' : 'text-red-500'}`;
+            
+            const winRate = stats.totalTrades > 0 ? (stats.successfulTrades / stats.totalTrades * 100).toFixed(1) : 0;
+            document.getElementById('winRate').textContent = winRate + '%';
+            
+            document.getElementById('activePositions').textContent = (data.positions || []).length;
+            document.getElementById('trackedWallets').textContent = data.trackedWallets || 0;
+
+            // Update open positions
+            updateOpenPositions(data.positions || []);
+
+            // Update trade history
+            updateTradeHistory(data.trades || []);
+
+            // Update performance chart
+            updatePerformanceChart(data.trades || []);
+        }
+
+        function updateOpenPositions(positions) {
+            const container = document.getElementById('openPositionsList');
+            document.getElementById('openCount').textContent = positions.length + ' position' + (positions.length !== 1 ? 's' : '');
+            
+            if (positions.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-8">No open positions</div>';
+                return;
+            }
+
+            container.innerHTML = positions.map(pos => {
+                const pnl = pos.pnlPercent || 0;
+                const isProfit = pnl >= 0;
+                return `
+                    <div class="bg-white/5 rounded-xl p-4 hover:bg-white/10 transition">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="font-mono text-sm text-gray-400">${pos.tokenMint.substring(0, 8)}...</div>
+                            <div class="${isProfit ? 'text-green-500' : 'text-red-500'} font-bold text-xl">
+                                ${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}%
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <div>
+                                <div class="text-gray-400">Entry: ${(pos.entryPrice || 0).toFixed(8)} SOL</div>
+                                <div class="text-gray-300">Now: ${(pos.currentPrice || 0).toFixed(8)} SOL</div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="sellPosition('${pos.id}')" class="px-4 py-2 gradient-red rounded-lg text-sm font-bold hover:opacity-90">
+                                    SELL
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateTradeHistory(trades) {
+            const container = document.getElementById('tradeHistory');
+            if (trades.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-8">No trades yet</div>';
+                return;
+            }
+
+            container.innerHTML = trades.slice(-10).reverse().map(trade => {
+                const isProfit = (trade.pnlPercent || 0) >= 0;
+                const time = new Date(trade.exitTime).toLocaleString();
+                return `
+                    <div class="bg-white/5 rounded-xl p-4 flex items-center justify-between hover:bg-white/10 transition">
+                        <div class="flex items-center space-x-4">
+                            <div class="${isProfit ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'} w-10 h-10 rounded-full flex items-center justify-center font-bold">
+                                ${isProfit ? '↑' : '↓'}
+                            </div>
+                            <div>
+                                <div class="font-mono text-sm">${trade.tokenMint.substring(0, 12)}...</div>
+                                <div class="text-xs text-gray-400">${time}</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="${isProfit ? 'text-green-500' : 'text-red-500'} font-bold">
+                                ${trade.pnlPercent >= 0 ? '+' : ''}${trade.pnlPercent.toFixed(2)}%
+                            </div>
+                            <div class="text-xs text-gray-400">${trade.exitReason}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updatePerformanceChart(trades) {
+            if (!performanceChart || trades.length === 0) return;
+
+            const data = trades.slice(-20).map(t => t.pnlAmount || 0);
+            const labels = trades.slice(-20).map((t, i) => `T${i + 1}`);
+
+            let cumulative = 0;
+            const cumulativeData = data.map(val => {
+                cumulative += val;
+                return cumulative;
+            });
+
+            performanceChart.data.labels = labels;
+            performanceChart.data.datasets[0].data = cumulativeData;
+            performanceChart.update('none');
+        }
+
+        function formatPnL(value) {
+            const sign = value >= 0 ? '+' : '';
+            return sign + value.toFixed(4) + ' SOL';
+        }
+
+        // Tab switching
+        function showTab(tab) {
+            ['dashboard', 'leaderboard', 'positions'].forEach(t => {
+                document.getElementById(`content-${t}`).classList.toggle('hidden', t !== tab);
+                document.getElementById(`tab-${t}`).classList.toggle('border-purple-500', t === tab);
+                document.getElementById(`tab-${t}`).classList.toggle('text-white', t === tab);
+                document.getElementById(`tab-${t}`).classList.toggle('text-gray-400', t !== tab);
+                document.getElementById(`tab-${t}`).classList.toggle('border-b-2', t === tab);
+            });
+
+            if (tab === 'leaderboard') {
+                loadLeaderboard();
+            } else if (tab === 'positions') {
+                loadPositions();
+            }
+        }
+
+        // Search wallet
+        async function searchWallet() {
+            const address = document.getElementById('walletSearch').value.trim();
+            if (!address) return;
+
+            try {
+                const response = await fetch(`/api/wallet/${address}`);
+                const data = await response.json();
+                showWalletModal(address, data);
+            } catch (error) {
+                alert('Wallet not found or error loading data');
+            }
+        }
+
+        function showWalletModal(address, data) {
+            document.getElementById('modalWalletAddress').textContent = address.substring(0, 12) + '...';
+            document.getElementById('modalPnL').textContent = formatPnL(data.totalPnL || 0);
+            document.getElementById('modalWinRate').textContent = (data.winRate || 0).toFixed(1) + '%';
+            document.getElementById('modalTrades').textContent = data.totalTrades || 0;
+            document.getElementById('walletModal').classList.remove('hidden');
+        }
+
+        function closeWalletModal() {
+            document.getElementById('walletModal').classList.add('hidden');
+        }
+
+        async function sellPosition(positionId) {
+            if (!confirm('Sell this position?')) return;
+            
+            try {
+                const response = await fetch(`/api/positions/${positionId}/sell`, { method: 'POST' });
+                if (response.ok) {
+                    alert('Position sold successfully!');
+                }
+            } catch (error) {
+                alert('Error selling position');
+            }
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch('/api/leaderboard');
+                const data = await response.json();
+                displayLeaderboard(data);
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+            }
+        }
+
+        function displayLeaderboard(wallets) {
+            const container = document.getElementById('leaderboardList');
+            if (!wallets || wallets.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-8">No wallets tracked yet</div>';
+                return;
+            }
+
+            container.innerHTML = wallets.map((wallet, index) => {
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
+                return `
+                    <div class="bg-white/5 rounded-xl p-4 hover:bg-white/10 transition cursor-pointer" onclick="searchWallet('${wallet.address}')">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <div class="text-2xl">${medal}</div>
+                                <div>
+                                    <div class="font-mono">${wallet.address.substring(0, 12)}...</div>
+                                    <div class="text-sm text-gray-400">${wallet.totalTrades || 0} trades</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="${wallet.pnl >= 0 ? 'text-green-500' : 'text-red-500'} font-bold text-xl">
+                                    ${wallet.pnl >= 0 ? '+' : ''}${(wallet.pnl || 0).toFixed(2)}%
+                                </div>
+                                <div class="text-sm text-gray-400">${(wallet.winRate || 0).toFixed(1)}% win rate</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadPositions() {
+            try {
+                const response = await fetch('/api/positions/open');
+                const positions = await response.json();
+                displayPositionsList(positions);
+            } catch (error) {
+                console.error('Error loading positions:', error);
+            }
+        }
+
+        function displayPositionsList(positions) {
+            const container = document.getElementById('positionsList');
+            if (positions.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-8">No open positions</div>';
+                return;
+            }
+
+            container.innerHTML = positions.map(pos => {
+                const pnl = pos.pnlPercent || 0;
+                const isProfit = pnl >= 0;
+                return `
+                    <div class="${isProfit ? 'gradient-green' : 'gradient-red'} rounded-2xl p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <div class="text-2xl font-bold mb-2">${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}%</div>
+                                <div class="font-mono text-sm opacity-80">${pos.tokenMint.substring(0, 16)}...</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm opacity-80">Entry</div>
+                                <div class="font-bold">${(pos.entryPrice || 0).toFixed(8)} SOL</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="text-sm opacity-80">Current Price</div>
+                                <div class="font-bold">${(pos.currentPrice || 0).toFixed(8)} SOL</div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="sellPosition('${pos.id}')" class="px-6 py-3 bg-white text-gray-900 rounded-xl font-bold hover:bg-gray-100">
+                                    SELL NOW
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function copyTrade() {
+            alert('Copy trading feature - this would initiate a trade copy');
+        }
+
+        function addToTracking() {
+            alert('Wallet added to tracking list!');
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            connectWebSocket();
+            initCharts();
+        });
+    </script>
+</body>
+</html>

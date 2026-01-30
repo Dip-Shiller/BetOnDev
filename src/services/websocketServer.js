@@ -2,6 +2,7 @@ const WebSocket = require('ws');
 const dataStore = require('../utils/dataStore');
 const positionManager = require('../services/positionManager');
 const walletManager = require('../utils/walletManager');
+const walletTracker = require('./walletTracker');
 
 class WebSocketServer {
   constructor(server) {
@@ -45,6 +46,7 @@ class WebSocketServer {
       const posStats = positionManager.getPositionStats();
       const trades = dataStore.getTrades(20);
       const balances = await walletManager.getAllBalances();
+      const trackerStats = walletTracker.getStats();
 
       const data = {
         type: 'update',
@@ -56,6 +58,7 @@ class WebSocketServer {
         },
         trades,
         balances,
+        trackedWallets: trackerStats.trackedWallets,
       };
 
       if (ws.readyState === WebSocket.OPEN) {
