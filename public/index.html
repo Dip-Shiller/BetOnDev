@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BetOnDev - Copy Trading Dashboard</title>
+    <title>BetOnDev - Solana Wallet Tracker</title>
     <style>
         * {
             margin: 0;
@@ -12,33 +12,115 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             color: #fff;
-            padding: 20px;
+            min-height: 100vh;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
+            padding: 0 1rem;
         }
 
+        /* Header */
         header {
-            text-align: center;
-            margin-bottom: 40px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 0;
+            gap: 2rem;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
         }
 
         h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+            font-size: 1.5rem;
+            font-weight: 700;
         }
 
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
+        /* Search Bar */
+        .search-bar {
+            flex: 1;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            padding-right: 6rem;
+            border-radius: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 0.875rem;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            border: none;
+            border-radius: 0.5rem;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .search-btn:hover {
+            opacity: 0.9;
+        }
+
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .live-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            background: #10b981;
             border-radius: 50%;
-            background: #4ade80;
             animation: pulse 2s infinite;
         }
 
@@ -47,238 +129,700 @@
             50% { opacity: 0.5; }
         }
 
-        .grid {
+        /* Main Content */
+        main {
+            padding: 2rem 0;
+        }
+
+        /* Quick Stats Grid */
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
         }
 
-        .card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-
-        .card h2 {
-            font-size: 1.2em;
-            margin-bottom: 15px;
-            opacity: 0.9;
-        }
-
-        .stat {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 10px 0;
-            padding: 10px;
+        .stat-card {
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: transform 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: scale(1.02);
         }
 
         .stat-label {
-            opacity: 0.8;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
         }
 
         .stat-value {
-            font-weight: bold;
-            font-size: 1.2em;
+            font-size: 2rem;
+            font-weight: 700;
         }
 
-        .positive {
-            color: #4ade80;
+        .stat-value.green {
+            color: #10b981;
         }
 
-        .negative {
-            color: #f87171;
+        .stat-value.red {
+            color: #ef4444;
         }
 
-        .positions-table {
-            width: 100%;
-            overflow-x: auto;
+        .stat-meta {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 1.5rem;
         }
 
-        th {
-            background: rgba(255, 255, 255, 0.1);
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
             font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #fff;
+        }
+
+        .tab.active {
+            color: #fff;
+            border-bottom-color: #8b5cf6;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-meta {
+            font-size: 0.875rem;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Position Cards */
+        .position-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            transition: background 0.2s;
+        }
+
+        .position-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .position-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.75rem;
         }
 
         .token-address {
-            font-family: monospace;
-            font-size: 0.9em;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.6);
         }
 
-        .age {
-            opacity: 0.7;
+        .pnl-badge {
+            font-size: 1.25rem;
+            font-weight: 700;
         }
 
-        .trades-list {
-            max-height: 400px;
-            overflow-y: auto;
+        .pnl-badge.positive {
+            color: #10b981;
         }
 
-        .trade-item {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 8px;
+        .pnl-badge.negative {
+            color: #ef4444;
+        }
+
+        .position-footer {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 0.875rem;
         }
 
-        .balances-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+        .price-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
         }
 
-        .wallet-card {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
+        .price-label {
+            color: rgba(255, 255, 255, 0.6);
         }
 
-        .wallet-index {
-            opacity: 0.7;
-            font-size: 0.9em;
-            margin-bottom: 5px;
+        .price-value {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
         }
 
-        .wallet-balance {
-            font-size: 1.5em;
-            font-weight: bold;
-        }
-
-        .no-data {
-            text-align: center;
-            opacity: 0.6;
-            padding: 20px;
-        }
-
-        button {
-            background: rgba(255, 255, 255, 0.2);
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
             border: none;
-            padding: 6px 12px;
-            border-radius: 5px;
-            color: white;
+            font-weight: 600;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.2s;
         }
 
-        button:hover {
-            background: rgba(255, 255, 255, 0.3);
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            opacity: 0.9;
+        }
+
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.125rem;
+            border-radius: 0.75rem;
+            width: 100%;
+        }
+
+        /* Big PNL Cards */
+        .big-pnl-card {
+            padding: 2rem;
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .big-pnl-card.profit {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        .big-pnl-card.loss {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .big-pnl-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .big-pnl-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .big-pnl-token {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+
+        .big-pnl-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        .price-display {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        /* Trade History */
+        .trade-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.2s;
+        }
+
+        .trade-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .trade-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .trade-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .trade-icon.profit {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .trade-icon.loss {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .trade-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .trade-token {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+        }
+
+        .trade-time {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .trade-right {
+            text-align: right;
+        }
+
+        .trade-pnl {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .trade-pnl.positive {
+            color: #10b981;
+        }
+
+        .trade-pnl.negative {
+            color: #ef4444;
+        }
+
+        .trade-reason {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Leaderboard */
+        .leaderboard-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .leaderboard-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(4px);
+        }
+
+        .leaderboard-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .leaderboard-rank {
+            font-size: 1.5rem;
+            min-width: 3rem;
+        }
+
+        .leaderboard-wallet {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+        }
+
+        .leaderboard-trades {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .leaderboard-right {
+            text-align: right;
+        }
+
+        .leaderboard-pnl {
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .leaderboard-pnl.positive {
+            color: #10b981;
+        }
+
+        .leaderboard-pnl.negative {
+            color: #ef4444;
+        }
+
+        .leaderboard-winrate {
+            font-size: 0.875rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            max-width: 60rem;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 2rem;
+            cursor: pointer;
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: #fff;
+        }
+
+        .modal-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-stat {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+
+        .modal-stat-label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .modal-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Grid Layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .search-bar {
+                max-width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            h1 {
+                font-size: 1.25rem;
+            }
+
+            .big-pnl-value {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .position-footer {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .modal-actions {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🎯 BetOnDev Copy Trading Bot</h1>
-            <p><span class="status-indicator"></span> Live</p>
-        </header>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo">🎯</div>
+                    <h1>BetOnDev</h1>
+                </div>
+                
+                <div class="search-bar">
+                    <input 
+                        type="text" 
+                        id="walletSearch" 
+                        class="search-input"
+                        placeholder="Search any Solana wallet address..."
+                    />
+                    <button onclick="searchWallet()" class="search-btn">Search</button>
+                </div>
 
-        <div class="grid">
-            <div class="card">
-                <h2>📊 Statistics</h2>
-                <div class="stat">
-                    <span class="stat-label">Total Trades</span>
-                    <span class="stat-value" id="totalTrades">0</span>
+                <div class="live-indicator">
+                    <div class="live-dot"></div>
+                    <span>Live</span>
                 </div>
-                <div class="stat">
-                    <span class="stat-label">Open Positions</span>
-                    <span class="stat-value" id="openPositions">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Quick Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total PnL</div>
+                <div id="totalPnL" class="stat-value green">+0.0000 SOL</div>
+                <div class="stat-meta">All time</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Win Rate</div>
+                <div id="winRate" class="stat-value">0%</div>
+                <div class="stat-meta">Success ratio</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Positions</div>
+                <div id="activePositions" class="stat-value">0</div>
+                <div class="stat-meta">Open trades</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Tracked Wallets</div>
+                <div id="trackedWallets" class="stat-value">0</div>
+                <div class="stat-meta">Monitoring</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('dashboard')">Dashboard</button>
+            <button class="tab" onclick="showTab('leaderboard')">Leaderboard</button>
+            <button class="tab" onclick="showTab('positions')">Positions</button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="content-dashboard" class="content-section active">
+            <div class="grid-2">
+                <!-- Open Positions -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>Open Positions</span>
+                        <span class="card-meta" id="openCount">0 positions</span>
+                    </div>
+                    <div id="openPositionsList">
+                        <div class="empty-state">No open positions</div>
+                    </div>
                 </div>
-                <div class="stat">
-                    <span class="stat-label">Win Rate</span>
-                    <span class="stat-value" id="winRate">0%</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">Total PnL</span>
-                    <span class="stat-value" id="totalPnL">0 SOL</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">Unrealized PnL</span>
-                    <span class="stat-value" id="unrealizedPnL">0 SOL</span>
+
+                <!-- Token Holdings -->
+                <div class="card">
+                    <div class="card-title">Token Holdings</div>
+                    <div id="tokenHoldings">
+                        <div class="empty-state">No holdings</div>
+                    </div>
                 </div>
             </div>
 
+            <!-- Trade History -->
             <div class="card">
-                <h2>💼 Wallet Balances</h2>
-                <div id="balances" class="balances-grid">
-                    <div class="no-data">Loading...</div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>⏱️ Uptime</h2>
-                <div class="stat">
-                    <span class="stat-label">Running for</span>
-                    <span class="stat-value" id="uptime">0m</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-label">Last Update</span>
-                    <span class="stat-value" id="lastUpdate">-</span>
+                <div class="card-title">Trade History</div>
+                <div id="tradeHistory">
+                    <div class="empty-state">No trades yet</div>
                 </div>
             </div>
         </div>
 
-        <div class="card">
-            <h2>📍 Open Positions</h2>
-            <div class="positions-table">
-                <table id="positionsTable">
-                    <thead>
-                        <tr>
-                            <th>Token</th>
-                            <th>Entry Price</th>
-                            <th>Current Price</th>
-                            <th>PnL %</th>
-                            <th>PnL Amount</th>
-                            <th>Age</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="positionsBody">
-                        <tr><td colspan="7" class="no-data">No open positions</td></tr>
-                    </tbody>
-                </table>
+        <!-- Leaderboard Tab -->
+        <div id="content-leaderboard" class="content-section">
+            <div class="card">
+                <div class="card-title">Top Performers</div>
+                <div id="leaderboardList">
+                    <div class="empty-state">Loading leaderboard...</div>
+                </div>
             </div>
         </div>
 
-        <div class="card">
-            <h2>📜 Recent Trades</h2>
-            <div class="trades-list" id="tradesList">
-                <div class="no-data">No trades yet</div>
+        <!-- Positions Tab -->
+        <div id="content-positions" class="content-section">
+            <div id="positionsList">
+                <div class="empty-state">Loading positions...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Wallet Detail Modal -->
+    <div id="walletModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalWalletAddress">Wallet Details</h2>
+                <button onclick="closeWalletModal()" class="modal-close">&times;</button>
+            </div>
+            
+            <div class="modal-stats">
+                <div class="modal-stat">
+                    <div class="modal-stat-label">Total PnL</div>
+                    <div id="modalPnL" class="modal-stat-value green">+0 SOL</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-label">Win Rate</div>
+                    <div id="modalWinRate" class="modal-stat-value">0%</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-label">Total Trades</div>
+                    <div id="modalTrades" class="modal-stat-value">0</div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button onclick="copyTrade()" class="btn btn-primary btn-large">
+                    📋 COPY TRADE
+                </button>
+                <button onclick="addToTracking()" class="btn btn-primary btn-large">
+                    ⭐ TRACK WALLET
+                </button>
             </div>
         </div>
     </div>
 
     <script>
         let ws;
-        let reconnectInterval;
+        let currentModalWallet = null;
 
-        function connect() {
+        // Connect WebSocket
+        function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const host = window.location.host;
-            ws = new WebSocket(`${protocol}//${host}`);
+            ws = new WebSocket(`${protocol}//${window.location.host}`);
 
             ws.onopen = () => {
                 console.log('WebSocket connected');
-                clearInterval(reconnectInterval);
             };
 
             ws.onmessage = (event) => {
@@ -290,9 +834,7 @@
 
             ws.onclose = () => {
                 console.log('WebSocket disconnected, reconnecting...');
-                reconnectInterval = setInterval(() => {
-                    connect();
-                }, 5000);
+                setTimeout(connectWebSocket, 5000);
             };
 
             ws.onerror = (error) => {
@@ -300,102 +842,286 @@
             };
         }
 
+        // Update dashboard
         function updateDashboard(data) {
-            // Update stats
-            document.getElementById('totalTrades').textContent = data.stats.totalTrades;
-            document.getElementById('openPositions').textContent = data.stats.positionStats.open;
+            const stats = data.stats || {};
             
-            const winRate = data.stats.totalTrades > 0 
-                ? ((data.stats.successfulTrades / data.stats.totalTrades) * 100).toFixed(2)
-                : 0;
+            // Update stats
+            const totalPnL = stats.totalPnL || 0;
+            document.getElementById('totalPnL').textContent = formatPnL(totalPnL);
+            document.getElementById('totalPnL').className = `stat-value ${totalPnL >= 0 ? 'green' : 'red'}`;
+            
+            const winRate = stats.totalTrades > 0 ? (stats.successfulTrades / stats.totalTrades * 100).toFixed(1) : 0;
             document.getElementById('winRate').textContent = winRate + '%';
+            
+            document.getElementById('activePositions').textContent = (data.positions || []).length;
+            document.getElementById('trackedWallets').textContent = data.trackedWallets || 0;
 
-            const totalPnL = data.stats.totalPnL.toFixed(4);
-            const totalPnLEl = document.getElementById('totalPnL');
-            totalPnLEl.textContent = totalPnL + ' SOL';
-            totalPnLEl.className = 'stat-value ' + (data.stats.totalPnL >= 0 ? 'positive' : 'negative');
+            // Update open positions
+            updateOpenPositions(data.positions || []);
 
-            const unrealizedPnL = data.stats.positionStats.totalUnrealizedPnL.toFixed(4);
-            const unrealizedPnLEl = document.getElementById('unrealizedPnL');
-            unrealizedPnLEl.textContent = unrealizedPnL + ' SOL';
-            unrealizedPnLEl.className = 'stat-value ' + (data.stats.positionStats.totalUnrealizedPnL >= 0 ? 'positive' : 'negative');
+            // Update trade history
+            updateTradeHistory(data.trades || []);
+        }
 
-            // Update uptime
-            const uptime = Math.floor((Date.now() - data.stats.startTime) / 1000 / 60);
-            document.getElementById('uptime').textContent = uptime + 'm';
-            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
-
-            // Update balances
-            const balancesEl = document.getElementById('balances');
-            if (data.balances.length > 0) {
-                balancesEl.innerHTML = data.balances.map(wallet => `
-                    <div class="wallet-card">
-                        <div class="wallet-index">Wallet ${wallet.index + 1}</div>
-                        <div class="wallet-balance">${wallet.balance.toFixed(4)} SOL</div>
-                    </div>
-                `).join('');
+        function updateOpenPositions(positions) {
+            const container = document.getElementById('openPositionsList');
+            document.getElementById('openCount').textContent = positions.length + ' position' + (positions.length !== 1 ? 's' : '');
+            
+            if (positions.length === 0) {
+                container.innerHTML = '<div class="empty-state">No open positions</div>';
+                return;
             }
 
-            // Update positions
-            const positionsBody = document.getElementById('positionsBody');
-            if (data.positions.length > 0) {
-                positionsBody.innerHTML = data.positions.map(pos => {
-                    const age = Math.floor((Date.now() - pos.entryTime) / 1000 / 60);
-                    const pnlClass = pos.pnlPercent >= 0 ? 'positive' : 'negative';
-                    return `
-                        <tr>
-                            <td class="token-address">${pos.tokenMint.substring(0, 8)}...</td>
-                            <td>${pos.entryPrice.toFixed(8)} SOL</td>
-                            <td>${pos.currentPrice.toFixed(8)} SOL</td>
-                            <td class="${pnlClass}">${pos.pnlPercent.toFixed(2)}%</td>
-                            <td class="${pnlClass}">${pos.pnlAmount.toFixed(4)} SOL</td>
-                            <td class="age">${age}m</td>
-                            <td><button onclick="sellPosition('${pos.id}')">Sell</button></td>
-                        </tr>
-                    `;
-                }).join('');
-            } else {
-                positionsBody.innerHTML = '<tr><td colspan="7" class="no-data">No open positions</td></tr>';
-            }
-
-            // Update trades
-            const tradesList = document.getElementById('tradesList');
-            if (data.trades.length > 0) {
-                tradesList.innerHTML = data.trades.slice(-10).reverse().map(trade => {
-                    const pnlClass = trade.pnlPercent >= 0 ? 'positive' : 'negative';
-                    return `
-                        <div class="trade-item">
-                            <div>
-                                <div class="token-address">${trade.tokenMint.substring(0, 8)}...</div>
-                                <div class="age">${new Date(trade.exitTime).toLocaleString()}</div>
-                            </div>
-                            <div>
-                                <div class="${pnlClass}">${trade.pnlPercent.toFixed(2)}%</div>
-                                <div class="age">${trade.exitReason}</div>
+            container.innerHTML = positions.map(pos => {
+                const pnl = pos.pnlPercent || 0;
+                const isProfit = pnl >= 0;
+                return `
+                    <div class="position-card">
+                        <div class="position-header">
+                            <div class="token-address">${pos.tokenMint.substring(0, 12)}...</div>
+                            <div class="pnl-badge ${isProfit ? 'positive' : 'negative'}">
+                                ${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}%
                             </div>
                         </div>
-                    `;
-                }).join('');
+                        <div class="position-footer">
+                            <div class="price-info">
+                                <div><span class="price-label">Entry:</span> <span class="price-value">${(pos.entryPrice || 0).toFixed(8)}</span></div>
+                                <div><span class="price-label">Now:</span> <span class="price-value">${(pos.currentPrice || 0).toFixed(8)}</span></div>
+                            </div>
+                            <button onclick="sellPosition('${pos.id}')" class="btn btn-danger">SELL</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateTradeHistory(trades) {
+            const container = document.getElementById('tradeHistory');
+            if (trades.length === 0) {
+                container.innerHTML = '<div class="empty-state">No trades yet</div>';
+                return;
+            }
+
+            container.innerHTML = trades.slice(-10).reverse().map(trade => {
+                const isProfit = (trade.pnlPercent || 0) >= 0;
+                const time = new Date(trade.exitTime).toLocaleString();
+                return `
+                    <div class="trade-item">
+                        <div class="trade-left">
+                            <div class="trade-icon ${isProfit ? 'profit' : 'loss'}">
+                                ${isProfit ? '↑' : '↓'}
+                            </div>
+                            <div class="trade-info">
+                                <div class="trade-token">${trade.tokenMint.substring(0, 16)}...</div>
+                                <div class="trade-time">${time}</div>
+                            </div>
+                        </div>
+                        <div class="trade-right">
+                            <div class="trade-pnl ${isProfit ? 'positive' : 'negative'}">
+                                ${trade.pnlPercent >= 0 ? '+' : ''}${trade.pnlPercent.toFixed(2)}%
+                            </div>
+                            <div class="trade-reason">${trade.exitReason}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function formatPnL(value) {
+            const sign = value >= 0 ? '+' : '';
+            return sign + value.toFixed(4) + ' SOL';
+        }
+
+        // Tab switching
+        function showTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(`content-${tab}`).classList.add('active');
+
+            // Load data for specific tabs
+            if (tab === 'leaderboard') {
+                loadLeaderboard();
+            } else if (tab === 'positions') {
+                loadPositions();
             }
         }
 
-        function sellPosition(positionId) {
-            if (confirm('Are you sure you want to sell this position?')) {
-                fetch(`/api/positions/${positionId}/sell`, { method: 'POST' })
-                    .then(r => r.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('Position sold successfully');
-                        } else {
-                            alert('Failed to sell position');
-                        }
-                    })
-                    .catch(err => alert('Error: ' + err.message));
+        // Search wallet
+        async function searchWallet() {
+            const address = document.getElementById('walletSearch').value.trim();
+            if (!address) return;
+
+            try {
+                const response = await fetch(`/api/wallet/${address}`);
+                const data = await response.json();
+                showWalletModal(address, data);
+            } catch (error) {
+                alert('Wallet not found or error loading data');
             }
         }
 
-        // Connect on load
-        connect();
+        function showWalletModal(address, data) {
+            currentModalWallet = address;
+            document.getElementById('modalWalletAddress').textContent = address.substring(0, 16) + '...';
+            document.getElementById('modalPnL').textContent = formatPnL(data.totalPnL || 0);
+            document.getElementById('modalPnL').className = `modal-stat-value ${data.totalPnL >= 0 ? 'green' : 'red'}`;
+            document.getElementById('modalWinRate').textContent = (data.winRate || 0).toFixed(1) + '%';
+            document.getElementById('modalTrades').textContent = data.totalTrades || 0;
+            document.getElementById('walletModal').classList.add('active');
+        }
+
+        function closeWalletModal() {
+            document.getElementById('walletModal').classList.remove('active');
+            currentModalWallet = null;
+        }
+
+        async function sellPosition(positionId) {
+            if (!confirm('Sell this position?')) return;
+            
+            try {
+                const response = await fetch(`/api/positions/${positionId}/sell`, { method: 'POST' });
+                if (response.ok) {
+                    alert('✅ Position sold successfully!');
+                }
+            } catch (error) {
+                alert('❌ Error selling position');
+            }
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch('/api/leaderboard');
+                const data = await response.json();
+                displayLeaderboard(data);
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+            }
+        }
+
+        function displayLeaderboard(wallets) {
+            const container = document.getElementById('leaderboardList');
+            if (!wallets || wallets.length === 0) {
+                container.innerHTML = '<div class="empty-state">No wallets tracked yet</div>';
+                return;
+            }
+
+            container.innerHTML = wallets.map((wallet, index) => {
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
+                const isPnlPositive = (wallet.pnl || 0) >= 0;
+                return `
+                    <div class="leaderboard-item" onclick="searchWalletByAddress('${wallet.address}')">
+                        <div class="leaderboard-left">
+                            <div class="leaderboard-rank">${medal}</div>
+                            <div>
+                                <div class="leaderboard-wallet">${wallet.address.substring(0, 16)}...</div>
+                                <div class="leaderboard-trades">${wallet.totalTrades || 0} trades</div>
+                            </div>
+                        </div>
+                        <div class="leaderboard-right">
+                            <div class="leaderboard-pnl ${isPnlPositive ? 'positive' : 'negative'}">
+                                ${isPnlPositive ? '+' : ''}${(wallet.pnl || 0).toFixed(2)}%
+                            </div>
+                            <div class="leaderboard-winrate">${(wallet.winRate || 0).toFixed(1)}% win rate</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function searchWalletByAddress(address) {
+            document.getElementById('walletSearch').value = address;
+            await searchWallet();
+        }
+
+        async function loadPositions() {
+            try {
+                const response = await fetch('/api/positions/open');
+                const positions = await response.json();
+                displayPositionsList(positions);
+            } catch (error) {
+                console.error('Error loading positions:', error);
+            }
+        }
+
+        function displayPositionsList(positions) {
+            const container = document.getElementById('positionsList');
+            if (positions.length === 0) {
+                container.innerHTML = '<div class="empty-state">No open positions</div>';
+                return;
+            }
+
+            container.innerHTML = positions.map(pos => {
+                const pnl = pos.pnlPercent || 0;
+                const isProfit = pnl >= 0;
+                return `
+                    <div class="big-pnl-card ${isProfit ? 'profit' : 'loss'}">
+                        <div class="big-pnl-header">
+                            <div>
+                                <div class="big-pnl-value">${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}%</div>
+                                <div class="big-pnl-token">${pos.tokenMint.substring(0, 20)}...</div>
+                            </div>
+                            <div class="price-display">
+                                <div>Entry: ${(pos.entryPrice || 0).toFixed(8)} SOL</div>
+                            </div>
+                        </div>
+                        <div class="big-pnl-footer">
+                            <div class="price-display">
+                                <strong>Current: ${(pos.currentPrice || 0).toFixed(8)} SOL</strong>
+                            </div>
+                            <button onclick="sellPosition('${pos.id}')" class="btn btn-large" style="background: white; color: #111; max-width: 200px;">
+                                SELL NOW
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function copyTrade() {
+            if (currentModalWallet) {
+                alert('🚀 Copy trading initiated for wallet: ' + currentModalWallet);
+                closeWalletModal();
+            }
+        }
+
+        async function addToTracking() {
+            if (currentModalWallet) {
+                try {
+                    const response = await fetch(`/api/wallet/${currentModalWallet}/track`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({})
+                    });
+                    if (response.ok) {
+                        alert('⭐ Wallet added to tracking list!');
+                        closeWalletModal();
+                    }
+                } catch (error) {
+                    alert('Error adding wallet to tracking');
+                }
+            }
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            connectWebSocket();
+        });
+
+        // Close modal on outside click
+        document.getElementById('walletModal').addEventListener('click', (e) => {
+            if (e.target.id === 'walletModal') {
+                closeWalletModal();
+            }
+        });
     </script>
 </body>
 </html>

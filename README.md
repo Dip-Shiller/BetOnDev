@@ -1,13 +1,28 @@
-# 🎯 BetOnDev - Solana Copy Trading Bot
+# 🎯 BetOnDev - Solana Wallet Tracker
 
-A sophisticated automated trading bot that monitors whale wallets on Solana and automatically copies their trades using Jupiter aggregator. Features intelligent position management with take-profit, stop-loss, trailing stops, and timeout mechanisms.
+A beginner-friendly Solana wallet tracker with DexScreener-like UI. Track whale wallets, copy trades with one click, and monitor performance in real-time. Features big green/red PNL cards, wallet leaderboards, and instant wallet search - all in a clean, mobile-first interface.
 
 ## 🌟 Features
 
-### Trading Engine
-- **Whale Tracking**: Monitor multiple whale wallets via Helius webhooks
-- **Auto-Copy Trading**: Instantly copy detected trades via Jupiter API
-- **Multi-Wallet Support**: Trade with multiple wallets simultaneously
+### 📊 DexScreener-Like Interface
+- **One-Click Copy Trading**: Search any wallet and start copying instantly
+- **Big PNL Cards**: Green/red cards show profits/losses at a glance
+- **Wallet Search**: Instant stats for any Solana wallet address
+- **Leaderboard**: Top performers ranked by win rate and profit
+- **Live Updates**: Real-time WebSocket data streaming
+- **Mobile-First Design**: Optimized for all screen sizes
+
+### 🎯 Wallet Tracking
+- Monitor multiple whale wallets simultaneously
+- Track performance metrics (PNL, win rate, total trades)
+- Instant wallet stats on search
+- Add/remove wallets from tracking list
+- Performance history and analytics
+
+### 💹 Trading Engine
+- **Whale Tracking**: Monitor via Helius webhooks
+- **Auto-Copy Trading**: Instantly copy detected trades
+- **Multi-Wallet Support**: Trade with multiple wallets
 - **Smart Position Management**:
   - 100% Take-Profit target
   - 30% Stop-Loss protection
@@ -15,19 +30,22 @@ A sophisticated automated trading bot that monitors whale wallets on Solana and 
   - 60-minute timeout exit
   - Price checks every 10 seconds
 
-### Monitoring & Control
+### 🤖 Monitoring & Control
+- **Web Dashboard**: Beautiful real-time interface
+  - Search any wallet instantly
+  - Big green/red PNL cards for quick scanning
+  - Wallet leaderboard (top performers)
+  - Token holdings view
+  - Trade history timeline
+  - Large BUY/SELL/COPY buttons
+  - Live WebSocket updates
+  - Mobile-responsive design
+  
 - **Telegram Bot**: Real-time control and notifications
   - `/status` - View bot status and summary
   - `/positions` - List all open positions
   - `/sell <id>` - Manually close a position
   - `/stats` - Detailed trading statistics
-
-- **Web Dashboard**: Beautiful real-time interface
-  - Live PnL tracking with WebSocket updates
-  - Wallet balance monitoring
-  - Open positions overview
-  - Trade history
-  - Interactive controls
 
 ### Data & Persistence
 - JSON file-based persistence
@@ -79,6 +97,7 @@ STOP_LOSS_PERCENT=30
 TRAILING_STOP_PERCENT=20
 POSITION_TIMEOUT_MINUTES=60
 PRICE_CHECK_INTERVAL_SECONDS=10
+COPY_TRADE_SOL_AMOUNT=0.1
 
 # Telegram Bot (Optional)
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
@@ -86,9 +105,12 @@ TELEGRAM_CHAT_ID=your_telegram_chat_id
 
 # Server Configuration
 PORT=3000
+
+# Webhook Security (recommended)
+WEBHOOK_SECRET=your_random_secret_string
 ```
 
-4. Start the bot:
+4. Start the tracker:
 ```bash
 npm start
 ```
@@ -98,17 +120,18 @@ For development with auto-reload:
 npm run dev
 ```
 
-## 📊 Dashboard
+## 🌐 Dashboard
 
 Access the web dashboard at `http://localhost:3000`
 
 The dashboard provides:
-- Real-time position tracking
-- Live PnL updates via WebSocket
-- Wallet balance monitoring
-- Trade history
-- Performance metrics
-- Manual position control
+- **Instant Wallet Search**: Look up any Solana wallet
+- **Big PNL Cards**: See profits/losses at a glance (green for profit, red for loss)
+- **Leaderboard**: Top tracked wallets ranked by performance
+- **Live Position Tracking**: Real-time updates via WebSocket
+- **Trade History Timeline**: Complete trading history
+- **One-Click Actions**: Copy trades or track wallets instantly
+- **Mobile-First Design**: Perfect on any device
 
 ## 🤖 Telegram Bot Setup
 
@@ -149,16 +172,26 @@ BetOnDev/
 └── .env.example
 ```
 
-## 🌐 API Endpoints
+## 📝 API Endpoints
 
+### Core Endpoints
 - `GET /health` - Health check
-- `POST /webhook/helius` - Helius webhook receiver
+- `GET /api/stats` - Trading statistics
 - `GET /api/positions` - Get all positions
 - `GET /api/positions/open` - Get open positions
 - `POST /api/positions/:id/sell` - Manually sell position
 - `GET /api/trades` - Get trade history
-- `GET /api/stats` - Get trading statistics
 - `GET /api/balances` - Get wallet balances
+
+### Wallet Tracking Endpoints
+- `GET /api/leaderboard` - Get top performing wallets
+- `GET /api/wallet/:address` - Get wallet stats
+- `POST /api/wallet/:address/track` - Add wallet to tracking
+- `DELETE /api/wallet/:address/track` - Remove from tracking
+- `GET /api/tracked-wallets` - Get all tracked wallets
+
+### Webhook
+- `POST /webhook/helius` - Helius webhook receiver
 
 ## 🚂 Railway Deployment
 
